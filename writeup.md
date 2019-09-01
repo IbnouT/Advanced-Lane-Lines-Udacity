@@ -36,9 +36,6 @@ Final results of the videos processing can be found in the folder [output_videos
 * Harder Challenge Video:
   - [harder_challenge_video.mp4](output_videos/harder_challenge_video.mp4)
 
-
-[![Video Challenge](./images/project_video_processed3.gif?raw=true)](https://youtu.be/6i8Ooc6_kjk)
-
 [//]: # (Image References)
 
 [orig_cal1]: ./camera_cal/calibration2.jpg "Calibration Image 1"
