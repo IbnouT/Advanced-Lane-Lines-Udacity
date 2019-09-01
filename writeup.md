@@ -1,6 +1,13 @@
 # **Advanced Lane Lines Finding**
 
 ## Project2 for Self-Driving Cars Nanodegree @Udacity
+
+---
+
+<p align="center">
+  <img src="./images/project_video_processed3.gif">
+</p>
+
 ---
 
 ## **Overview**
@@ -67,6 +74,7 @@ Final results of the videos processing can be found in the folder [output_videos
 [region_selection]: ./images/region_select_solidYellowLeft.png "Region Selection 1"
 [example_widget]: ./images/example_widget.png "Example Interactive Widget"
 [road_up_hill]: ./images/road_up_hill.jpg "Example Road Up Hill"
+
 ---
 
 ## **Processing Steps**
@@ -184,11 +192,11 @@ The following shows the new area of interest after removing uninteresting colors
 Here I used a union of :
 - sobel directional gradient operators (`sobel x`, `sobel y`):
 
-`def abs_sobel_thresh(image, orient='x', sobel_kernel=3, thresh=(0, 255))` (in cell code 13th)
+`def abs_sobel_thresh(image, orient='x', sobel_kernel=3, thresh=(0, 255))` (in 13th cell code)
 
 - grandient magnitude of both sobel directional operators:
 
-`def mag_thresh(image, sobel_kernel=3, mag_thresh=(0, 255))` (in cell code 13th)
+`def mag_thresh(image, sobel_kernel=3, mag_thresh=(0, 255))` (in 13th cell code)
 
 The combined gradient (`sobel x` | `sobel y` | `magnitude`) is then intersected with the `other colors` area of interest defined in section `2.2.1` above.
 ```
