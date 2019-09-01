@@ -2,8 +2,6 @@
 
 ## Project2 for Self-Driving Cars Nanodegree @Udacity
 
----
-
 <p align="center">
   <img src="./images/project_video_processed3.gif">
 </p>
