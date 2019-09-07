@@ -269,6 +269,7 @@ But when there is too much noise, we might not detect correctly start of the lin
 <p align="center">
   <img src="./output_images/hist_sample2.png">
 </p>
+
 In above figure, the new areas to look for the histogram peaks are under the blue line (lower half of the image) but between the green solid lines. Those areas are centered at the green doted lines (located at x positions `image_width/4` and `3*image_width/4`) with a respective widths of 200px for left area and 250px for right area.
 In that example, the magenta dotted lines indicate where we would have located the histogram peaks with the first approach, and we can see the peak on the left side is completely off. But using the new defined area we get the yellow dotted line at the position of the new peak on right side (on left side both yellow and magenta lines are at the position for this example).
 The left and right position of the histogram peaks are considered as centers of the starting search windows: `leftx_current` and `rightx_current`.
@@ -292,6 +293,7 @@ Some edge cases are also handled:
 <p align="center">
   <img src="./output_images/slidingw_warp_thresholded_undistorted_test6.jpg">
 </p>
+
 - Step (c) is further improved by considering that when there is too much noise on the sliding window area then the position of the mean pixels might deviate a lot from the positions of pixels of the line. In such case:
   - For right sliding window, the line is more likely to be on the left side and noise on the right side
   - For left sliding window, the line is more likely to be on the right side and noise on the left side
