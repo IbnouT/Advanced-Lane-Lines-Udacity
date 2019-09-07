@@ -52,8 +52,11 @@ Final results of the videos processing can be found in the folder [output_videos
 [other_color_test_image3]: ./output_images/other_color_undistorted_42_image.jpg "Remove Other Colors"
 [gradient_test_image3]: ./output_images/gradient_undistorted_42_image.jpg "Gradient Detection"
 [combined_color_gradient]: ./output_images/thresholded_undistorted_42_image.jpg "Combined Color & Gradient Detection"
-
 [thresholding]: ./images/Thresholding.png "Thresholding"
+[test_image4]: ./output_images/undistorted_straight_lines1.jpg "Test Image 4"
+[warp_perspective4]: ./output_images/warp_undistorted_straight_lines1.jpg "Warp Perspective 4"
+[test_image5]: ./output_images/undistorted_2_image.jpg "Test Image 4"
+[warp_perspective5]: ./output_images/warp_undistorted_2_image.jpg "Warp Perspective 4"
 
 [pipeline]: ./images/pipeline.png "Pipeline"
 [original]: ./test_images/solidYellowLeft.jpg "Original Image"
@@ -153,7 +156,7 @@ The resulting white mask is based on the intersection `(white_rgb_binary == 1) &
 | ![alt text][test_image2]  | ![alt text][white_test_image2]  |
 
 ###### 2.2.1 Yellow Color
-To select yellow color however I only considered `H` and `S` channels of HLS color space. Again threshold values are empiric.
+To select yellow color however I only considered `H` and `S` channels of HLS color space. Again threshold values are empiricals.
 ```
 HLS_LOW_YELLOW = np.array([10, 0, 100])
 HLS_UPPER_YELLOW = np.array([40, 255, 255])
@@ -224,3 +227,116 @@ As example of output:
 | ![alt text][test_image3]  | ![alt text][combined_color_gradient]  |
 
 #### Step 3: Perspective Transform
+In this step the image is warped to get a bird-eye view of the lane lines of interest.
+The function `compute_perspective_transform_matrix` in the notebook computes the perspective transform matrix from source & destination coordinates, while `apply_warp_perspective` function applies the perspective transform to warp an image.
+```
+def compute_perspective_transform_matrix(src_coords, dst_coords):
+    src = np.float32([src_coords[0], src_coords[1], src_coords[2], src_coords[3]])
+    dst = np.float32([dst_coords[0], dst_coords[1], dst_coords[2], dst_coords[3]])
+    return cv2.getPerspectiveTransform(src, dst)
+
+
+def apply_warp_perspective(image, M, img_size=IMG_SIZE, flags=cv2.INTER_LINEAR):
+    return cv2.warpPerspective(image, M, img_size, flags=flags)
+```
+I hardcoded some empirical values for source & destination coordinates as following (cell code 17 on the IPython notebook):
+```
+# Source coordinates
+src_coords = [[190, 719], [569, 465], [714, 465], [1126, 719]]
+
+# destination coordinates
+dst_coords = [[290, 719], [290, 0], [1026, 0], [1026, 719]]
+```
+We can see in the following example that the perspective transform works as expected:
+
+| Test Images | Warped Images |
+| :---: |:---:|
+| ![alt text][test_image4]  | ![alt text][warp_perspective4]  |
+| ![alt text][test_image5]  | ![alt text][warp_perspective5]  |
+
+Note that the inverse transform matrix is computed by inversing position of source & destination coordinates in the `compute_perspective_transform_matrix` function.
+
+#### Step 3: Detection of Lane Lines
+##### 3.1 Detection of Lane Lines (Image)
+Two approaches are use for detecting the lane lines pixels on an image.
+###### 3.1.1 Sliding windows search
+I used this technique to detect the lane lines when there was not enough previous information of where the lines should be located in the image. The following steps implement the search algorithm:
+1. Compute histogram peaks on the lower half of the image: it is likely that the lane lines will be found on the lower part of the image at around the points where we have the left and right peaks of the histogram. (See the interactive function `show_histogram` in cell code 21)
+<p align="center">
+  <img src="./output_images/hist_sample1.png">
+</p>
+But when there is too much noise, we might not detect correctly start of the lines. So a better idea I had was to reduce the area where I look for the left and right peaks of the histogram.
+<p align="center">
+  <img src="./output_images/hist_sample2.png">
+</p>
+In above figure, the new areas to look for the histogram peaks are under the blue line (lower half of the image) but between the green solid lines. Those areas are centered at the green doted lines (located at x positions `image_width/4` and `3*image_width/4`) with a respective widths of 200px for left area and 250px for right area.
+In that example, the magenta dotted lines indicate where we would have located the histogram peaks with the first approach, and we can see the peak on the left side is completely off. But using the new defined area we get the yellow dotted line at the position of the new peak on right side (on left side both yellow and magenta lines are at the position for this example).
+The left and right position of the histogram peaks are considered as centers of the starting search windows: `leftx_current` and `rightx_current`.
+
+2. Once the interesting starting positions of the left and right search windows are defined, we loop through each window in `nwindows` (the number of sliding windows to go through from bottom to top of the image) with the following general steps:
+  - (a) Find the boundaries of our current window. This is based on a combination of the current window's starting point (leftx_current and rightx_current), as well as the width and height of the window
+  - (b) From the boundaries of our window, we find out which activated pixels fall into the window and we keep track of them in the lists `left_lane_inds` and `right_lane_inds`.
+  - (c) If the number of pixels you found are greater than a fixed threshold `minpix`, then we re-center our window (i.e. leftx_current or rightx_current) based on the mean position of these pixels.
+
+  <p align="center">
+      <img src="./output_images/slidingw_warp_thresholded_undistorted_straight_lines1.jpg">
+  </p>
+
+  The above steps are implemented in cell code 22 of the Jupiter notebook by the function `find_lane_sliding_windows`.
+
+Some edge cases are also handled:
+- In the step (c) above, if the number of pixels found is zero then we flag it as miss and increase the counters `left_miss` or `right_miss`. The idea being that if the number of misses is higher than the threshold `max_nissed` (value fixed to 3) then we will stop searching for pixels for that line. This is to avoid detecting later some noise as lane pixels. But when we find some number of pixels higher than the threshold `minpix` then we reset those counters `left_miss` or `right_miss` to zero and increase the counters `left_found` or `right_found`.
+- If there is a major difference between the counters `left_found` or `right_found` then we will drop the line with lesser pixels found and compute polynomial curve fit for it that is equidistant to the other line found (see function `search_with_sliding_windows` in cell code 23)
+
+- The following is an illustration of the above points: sliding windows is stopped as we failed to found more pixels for rigth line and a fit line is computed as an equidistant to left line found.
+<p align="center">
+  <img src="./output_images/slidingw_warp_thresholded_undistorted_test6.jpg">
+</p>
+- Step (c) is further improved by considering that when there is too much noise on the sliding window area then the position of the mean pixels might deviate a lot from the positions of pixels of the line. In such case:
+  - For right sliding window, the line is more likely to be on the left side and noise on the right side
+  - For left sliding window, the line is more likely to be on the right side and noise on the left side
+  - So in step (c) the `leftx_current` and `rightx_current` are computed respectively as mean position of the found pixels in the last quarter of the left sliding window and mean position of the found pixels in the first quarter of the right sliding window.
+
+  The following figure is an illustration of that: you can see how the right sliding windows are avoiding the noise area and capturing instead the pixels of the right line.
+
+  <p align="center">
+    <img src="./output_images/slidingw_warp_thresholded_undistorted_0021_image.jpg">
+  </p>
+
+###### 3.1.2 Search around polynomial fit line
+This approach is used once we have found fitted lane lines from previous image. In this case we don't need to go through the sliding windows search but instead we just look around the fitted lane lines +/- a certain x-margin. This is implemented in cell code 24 in the Jupyter notebook.
+
+The following figures show an example of line detection with sliding windows, followed by a search around the polynomial fitted line.
+<p align="center">
+  <img src="./output_images/aroundPolySearch.jpg">
+</p>
+
+##### 3.2 Detection of Lane Lines (Video)
+The general idea of detecting lane lines in a Video is as follow (implemented by the function `process_image`, 27th cell code in the IPython notebook):
+1. Search for lines pixels on the image:
+
+  1.1 If left line or right line was detected in previous image then:
+    - Try to detect lines on current image by `searching the area around the previous polynomial lines fits` and fit the pixels detected into a polynomial curve
+
+  1.2 Else: # (We did not line fits for previous image)
+    - Try to detect lines on current image using `sliding search windows` and fit the pixels detected into a polynomial curve
+
+
+2. Try to fit the pixels detected into a polynomial curve
+3. If a line pixels are successfully fitted into a poly curve, then:
+
+  3.1. Sanity check the line to ensure it does not deviate too much from detected lines in previous images
+
+  3.2 If a line passes the sanity check it is flagged as detected and added to the list of detected lines
+
+4. If a line is flagged as detected:
+
+  4.1 add it to the list of detected lines
+
+5. If only one line (left or right) was detected in previous step:
+
+  5.1  Compute a fit of the missing line as an equidistant curve to the detected line (function `get_parralel_line` in cell code 21)
+
+  5.2 Sanity check the computed equidistant line to ensure it does not deviate too much from detected lines in previous images and flag it as `detected` upon passing the check.
+
+6. For each detected line compute a new average line fit over the n iteration of the detected same line
