@@ -256,10 +256,10 @@ We can see in the following example that the perspective transform works as expe
 
 Note that the inverse transform matrix is computed by inversing position of source & destination coordinates in the `compute_perspective_transform_matrix` function.
 
-#### Step 3: Detection of Lane Lines
-##### 3.1 Detection of Lane Lines (Image)
+#### Step 4: Detection of Lane Lines
+##### 4.1 Detection of Lane Lines (Image)
 Two approaches are use for detecting the lane lines pixels on an image.
-###### 3.1.1 Sliding windows search
+###### 4.1.1 Sliding windows search
 I used this technique to detect the lane lines when there was not enough previous information of where the lines should be located in the image. The following steps implement the search algorithm:
 1. Compute histogram peaks on the lower half of the image: it is likely that the lane lines will be found on the lower part of the image at around the points where we have the left and right peaks of the histogram. (See the interactive function `show_histogram` in cell code 21)
 <p align="center">
@@ -305,7 +305,7 @@ Some edge cases are also handled:
     <img src="./output_images/slidingw_warp_thresholded_undistorted_0021_image.jpg">
   </p>
 
-###### 3.1.2 Search around polynomial fit line
+###### 4.1.2 Search around polynomial fit line
 This approach is used once we have found fitted lane lines from previous image. In this case we don't need to go through the sliding windows search but instead we just look around the fitted lane lines +/- a certain x-margin. This is implemented in cell code 24 in the Jupyter notebook.
 
 The following figures show an example of line detection with sliding windows, followed by a search around the polynomial fitted line.
@@ -313,32 +313,43 @@ The following figures show an example of line detection with sliding windows, fo
   <img src="./output_images/aroundPolySearch.jpg">
 </p>
 
-##### 3.2 Detection of Lane Lines (Video)
+##### 4.2 Detection of Lane Lines (Video)
 The general idea of detecting lane lines in a Video is as follow (implemented by the function `process_image`, 27th cell code in the IPython notebook):
 1. Search for lines pixels on the image:
 
-  1.1 If left line or right line was detected in previous image then:
+  - If left line or right line was detected in previous image then:
     - Try to detect lines on current image by `searching the area around the previous polynomial lines fits` and fit the pixels detected into a polynomial curve
 
-  1.2 Else: # (We did not line fits for previous image)
+  - Else: # (We did not line fits for previous image)
     - Try to detect lines on current image using `sliding search windows` and fit the pixels detected into a polynomial curve
 
 
 2. Try to fit the pixels detected into a polynomial curve
 3. If a line pixels are successfully fitted into a poly curve, then:
 
-  3.1. Sanity check the line to ensure it does not deviate too much from detected lines in previous images
+  - Sanity check the line to ensure it does not deviate too much from detected lines in previous images
 
-  3.2 If a line passes the sanity check it is flagged as detected and added to the list of detected lines
-
-4. If a line is flagged as detected:
-
-  4.1 add it to the list of detected lines
+  - If a line passes the sanity check it is flagged as detected and added to the list of detected lines
 
 5. If only one line (left or right) was detected in previous step:
 
-  5.1  Compute a fit of the missing line as an equidistant curve to the detected line (function `get_parralel_line` in cell code 21)
+  -  Compute a fit of the missing line as an equidistant curve to the detected line (function `get_parralel_line` in cell code 21)
 
-  5.2 Sanity check the computed equidistant line to ensure it does not deviate too much from detected lines in previous images and flag it as `detected` upon passing the check.
+  - Sanity check the computed equidistant line to ensure it does not deviate too much from detected lines in previous images and flag it as `detected` upon passing the check.
 
 6. For each detected line compute a new average line fit over the n iteration of the detected same line
+
+#### Step 5: Radius of curvature of the lane and vehicle position
+- Given the coefficients of polynomial fit curve of a lane line, we can compute the radius of curvature at the vehicle y position (implemented in the utility class `Line` by the functon `_curvature_real`, 26th cell code in the notebook):
+```
+curverad = np.power(1 + (2*fit[0]*y_eval*ym_per_pix + fit[1])**2, 1.5)/(2*np.abs(fit[0]))
+```
+The radius of curvature of the lane is then computed as average of the radius of curvature of letf and right lane lines `(LEFT_LINES.best_radius_of_curvature + RIGHT_LINES.best_radius_of_curvature) / 2` (see in cell code 27).
+
+- The position of the vehicle is computed with respect to each line detected (function `_car_pos_from_line` in cell code 26) then averaged for both lines over n iteration in cell code 27.
+
+#### Step 7: Plotting the result back onto the original image
+This step is implemented by the function `process_video` in cell code 27. The following is an example of the output.
+<p align="center">
+  <img src="./output_images/result_2_image.jpg">
+</p>
