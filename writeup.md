@@ -353,3 +353,8 @@ This step is implemented by the function `process_video` in cell code 27. The fo
 <p align="center">
   <img src="./output_images/result_2_image.jpg">
 </p>
+
+## **Discussion**
+- One of the main challenge of this project was to fine tune the different parameters with threshold values that could apply to all images. For example the harder challenge has more brightness and I had to try to adjust it adjust it before to fall under same thresholding ranges as the other input images/videos.
+- The noise on some images after thresholding was too much and the sliding windows was not working well on those. I had to make some assumption on where I could most probably find the lines (for example assuming that in a left sliding window, when there is too much noise, the line should be mostly on the right side of the window) but for that to work well it should also take into account the direction of curvature of the line.
+- Overall there is too much overfitting to cope with particular issues detected on specific images. This pipeline is not strong enough for all type of variation. The harder challenge for example could have been improve
