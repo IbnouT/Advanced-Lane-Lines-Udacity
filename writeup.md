@@ -339,6 +339,8 @@ The general idea of detecting lane lines in a Video is as follow (implemented by
 
 6. For each detected line compute a new average line fit over the n iteration of the detected same line
 
+Links to resulting videos are provided in the Overview section of this writeup.
+
 #### Step 5: Radius of curvature of the lane and vehicle position
 - Given the coefficients of polynomial fit curve of a lane line, we can compute the radius of curvature at the vehicle y position (implemented in the utility class `Line` by the functon `_curvature_real`, 26th cell code in the notebook):
 ```
