@@ -22,7 +22,7 @@ I've considered the following steps to calibrate the camera and build a processi
 7. Warping the detected lane boundaries back onto the original image
 8. Output visual display of the lane boundaries and estimation of lane curvature and vehicle position
 
-The main entry point :
+Implementation code :
 - [Pipeline.ipynb](./Pipeline.ipynb) : Jupyter notebook with full step by step implementation of the pipeline and testing on images & videos.
 
 
@@ -348,7 +348,7 @@ The radius of curvature of the lane is then computed as average of the radius of
 
 - The position of the vehicle is computed with respect to each line detected (function `_car_pos_from_line` in cell code 26) then averaged for both lines over n iteration in cell code 27.
 
-#### Step 7: Plotting the result back onto the original image
+#### Step 6: Plotting the result back onto the original image
 This step is implemented by the function `process_video` in cell code 27. The following is an example of the output.
 <p align="center">
   <img src="./output_images/result_2_image.jpg">
