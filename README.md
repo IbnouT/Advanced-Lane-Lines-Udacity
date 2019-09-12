@@ -12,7 +12,7 @@ The main entry points :
 
 - [writeup.md](./writeup.md) : Writeup describing the pipeline and explaining the solution approach.
 
-[![Video Challenge](./images/project_video_processed3.gif?raw=true)](https://youtu.be/6i8Ooc6_kjk)
+[![Video Challenge](./images/project_video_processed3.gif?raw=true)](https://youtu.be/se9lcvKFbtA)
 ---
 ## Quick Setup
 #### 1. Install [Anaconda](https://www.anaconda.com/distribution/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
