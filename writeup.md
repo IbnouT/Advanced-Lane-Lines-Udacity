@@ -343,12 +343,22 @@ Links to resulting videos are provided in the Overview section of this writeup.
 
 #### Step 5: Radius of curvature of the lane and vehicle position
 - Given the coefficients of polynomial fit curve of a lane line, we can compute the radius of curvature at the vehicle y position (implemented in the utility class `Line` by the functon `_curvature_real`, 26th cell code in the notebook):
+
 ```
-curverad = np.power(1 + (2*fit[0]*y_eval*ym_per_pix + fit[1])**2, 1.5)/(2*np.abs(fit[0]))
+# Get poly fit coefficients in meter
+meter_fit = np.polyfit(ploty*self.ym_per_pix, fitx*self.xm_per_pix, 2)
+
+# y-position of the car in meter
+meter_y_eval = np.max(ploty)*self.ym_per_pix
+
+# Define y-value where we want radius of curvature
+curverad = np.power(1 + (2*meter_fit[0]*meter_y_eval + meter_fit[1])**2, 1.5)/(2*np.abs(meter_fit[0]))
 ```
 The radius of curvature of the lane is then computed as average of the radius of curvature of letf and right lane lines `(LEFT_LINES.best_radius_of_curvature + RIGHT_LINES.best_radius_of_curvature) / 2` (see in cell code 27).
 
 - The position of the vehicle is computed with respect to each line detected (function `_car_pos_from_line` in cell code 26) then averaged for both lines over n iteration in cell code 27.
+
+Note that for radius > 10000 we consider it is just straight lane.
 
 #### Step 6: Plotting the result back onto the original image
 This step is implemented by the function `process_video` in cell code 27. The following is an example of the output.
